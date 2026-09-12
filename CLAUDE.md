@@ -16,6 +16,8 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering, Skedulo.
 | `apps-script/appsscript.json` | Manifest. Pins the OAuth scopes — without it Apps Script infers broader ones. |
 | `docs/change-map.md` | What else has to change when you change something. |
 | `scripts/check.mjs` | The couplings nothing else can see. `node scripts/check.mjs`. |
+| `tests/` | The suites, and the harness that loads both halves of the tool. `npm test`. |
+| `package.json` | Exists only so the tests can have `jsdom`. Not part of the tool. |
 | `.vercelignore` | An allowlist, not a blocklist. Keeps everything but the tool off the public URL. |
 | `start-drive-sharing-check.command` | Double-click launcher. Serves the folder on port 8000 — the only origin Google accepts for local sign-in. |
 
@@ -37,6 +39,8 @@ There is no build step. Open the HTML, or serve it over http.
 
 | Task | Command |
 |---|---|
+| Run the tests | `npm test` |
+| Run one suite | `node tests/qa_email.js` |
 | Check the couplings a script can catch | `node scripts/check.mjs` |
 | Enable the pre-push hook — once per clone | `git config core.hooksPath scripts/git-hooks` |
 | Run the tool locally | `./start-drive-sharing-check.command` |
@@ -233,25 +237,34 @@ open(p, 'w', encoding='utf-8').write(s.replace('>STAMP<', '>' + stamp + '<'))
 
 ## Testing
 
-**There are no tests in this repo.** `node scripts/check.mjs` is a consistency
-checker, not a test suite. The table below is a specification for what to
-build, not a description of anything that runs today.
+`npm test` runs everything. A single suite runs on its own —
+`node tests/qa_email.js` — and `node tests/run-all.mjs email` runs the ones
+whose name matches. Each suite prints `N passed, M failed`.
 
-The suites from the original build session were lost when the environment
-reset. Rebuilding them and committing them is the highest-value first task.
-They were Node scripts using `jsdom`, run directly — `node qa_whatever.js` —
-each printing `N passed, M failed`.
+The suites lost when the environment reset were rebuilt in September 2026.
+They need `jsdom`, the repo's only dependency: `npm install` once. The tool
+itself still has none, and `.vercelignore` keeps `package.json` off the
+deployed site.
 
-What they covered, and should cover again:
-
-| Area | What it must cover |
+| Suite | Covers |
 |---|---|
-| Scope handling | A read-only grant is detected and re-consented, not used |
-| Email validation | Lists, semicolons, invisible characters, the picker firing `input` |
-| Segmented controls | End caps land on visible buttons, survive re-render |
-| Monitoring settings | Load, save, pause/resume patching only one flag |
-| Mobile flow | Change access works at 390px; every control reachable |
-| Apps Script | Baseline diffing, nested folders, paused runs, recipient lists |
+| `tests/qa_scopes.js` | A read-only grant is detected and re-consented, not used |
+| `tests/qa_email.js` | Lists, semicolons, invisible characters, the picker firing `input` |
+| `tests/qa_segmented.js` | End caps land on visible buttons, survive re-render |
+| `tests/qa_monitoring.js` | Load, save, pause/resume patching only one flag |
+| `tests/qa_mobile.js` | Change access at 390px; every control reachable |
+| `tests/qa_appsscript.js` | Baseline diffing, nested folders, paused runs, recipient lists |
+| `tests/harness.mjs` | Loads the page in jsdom and `apps-script/Code.gs` in a stubbed VM |
+
+**Every case here exists because something went wrong once.** A test whose
+name does not describe a real failure is a test nobody will trust enough to
+fix when it breaks. Before adding one, be able to say what it would have
+caught.
+
+**A green suite proves nothing until you have seen it go red.** All 18
+documented gotchas were reintroduced one at a time and each was caught by the
+case that names it. When you add a test, break the code on purpose and watch
+it fail before you trust it.
 
 ### jsdom limitations that will waste your time
 
@@ -312,4 +325,3 @@ nobody has to create their own OAuth client.
    permissions are additive and travel with the file. Remediation and prevention
    are separate jobs.
 
-4. Rebuild and commit the test suites.

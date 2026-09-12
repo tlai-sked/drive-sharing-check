@@ -1,0 +1,14 @@
+{
+  "name": "drive-sharing-check",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Tooling for the tests only. The tool itself has no build step and no dependencies.",
+  "scripts": {
+    "test": "node tests/run-all.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  }
+}

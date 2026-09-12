@@ -5,3 +5,6 @@
 
 # Vercel's local project link. Machine-specific; the CLI recreates it.
 .vercel
+
+# Test tooling only. The tool itself has no dependencies.
+node_modules/

@@ -54,6 +54,17 @@ the two.
 `node scripts/check.mjs` compares the query strings and the file names by exact
 text. The classification rules it cannot judge.
 
+### A function either half of the tool actually uses
+
+| Also change | Why |
+|---|---|
+| the suite that names it | `npm test`. The suites are in `tests/`, one per area, and each case is named after a real failure |
+
+Every test there was written against a specific mistake. If you change
+behaviour deliberately, change the test and keep its name honest; if you cannot
+say what a test would have caught, it should not exist. A green suite proves
+nothing until you have watched it go red — break the code on purpose first.
+
 ### A function in `apps-script/Code.gs`
 
 | Also change | Why |

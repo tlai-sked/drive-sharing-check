@@ -4,3 +4,14 @@ node scripts/check.mjs || {
   echo "Push blocked. Fix the above, or: git push --no-verify"
   exit 1
 }
+
+# Skipped rather than failed when the dependency is absent, so a fresh clone
+# can push before anyone has run npm install.
+if [ -d node_modules/jsdom ]; then
+  node tests/run-all.mjs || {
+    echo "Push blocked by failing tests. Fix them, or: git push --no-verify"
+    exit 1
+  }
+else
+  echo "Tests skipped: run npm install to enable them."
+fi

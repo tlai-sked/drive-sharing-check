@@ -1,9 +1,7 @@
 #!/bin/bash
 PORT=8000
 cd "$(dirname "$0")" || exit 1
-if [ -f "drive-sharing-check-local.html" ]; then
-  PAGE="http://localhost:$PORT/drive-sharing-check-local.html"
-elif [ -f "index.html" ]; then
+if [ -f "index.html" ]; then
   PAGE="http://localhost:$PORT/"
 else
   echo; echo "  Could not find the tool in this folder:"; echo "  $(pwd)"; echo
