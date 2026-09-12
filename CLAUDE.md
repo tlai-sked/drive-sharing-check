@@ -73,6 +73,17 @@ design, open issues — that must not be served from a public URL. Anything new
 that genuinely has to be public must be un-ignored by name. Verify after a
 deploy that `/CLAUDE.md` returns 404, not 200.
 
+The code lives at **https://github.com/tlai-sked/drive-sharing-check**,
+private — the docs here name people, internal repos and open security
+questions, which is also why `.vercelignore` keeps them off the deployed site.
+
+**Deployment is by CLI on purpose.** `.vercelignore` governs what the CLI
+uploads. A Git-connected build is a different path through Vercel, and this
+repo now exists on GitHub for someone to connect. If anyone ever does, check
+that `/CLAUDE.md` still returns 404 before trusting it, and that a stray
+`npm install` has not started running against `package.json` — which is here
+for the tests and nothing else.
+
 **The origin must be registered with Google, or nobody can sign in.** Add
 exactly `https://drive-sharing-check.vercel.app` to *Authorised JavaScript
 origins* on the OAuth client — no trailing slash, no path. Google matches the
