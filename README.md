@@ -14,7 +14,11 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering.
 
 - Scans your Drive for anything shared by link or shared with the whole
   organisation, and sorts it by how wide the access is.
-- Lets you narrow or remove that access without leaving the page.
+- Lets you narrow or remove that access without leaving the page — on files you
+  own. A file someone else owns is listed and classified, but not changed: it
+  offers **Remind owner**, which opens an email naming the file and its risk.
+  Drive would refuse the write anyway, and re-sharing another team's document
+  is not this tool's call to make.
 - Optionally watches folders you name and emails you when their sharing
   changes — including folders other people own.
 

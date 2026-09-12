@@ -225,6 +225,13 @@ string at runtime, so grepping for the em dash finds only the page's copy and
 you will conclude there is just one. Search for `SETTINGS_NAME` or
 `STATUS_NAME` instead.
 
+**`capabilities.canShare` is not ownership.** Drive reports it true on a file
+somebody granted you manage rights to, which you still do not own. Gating the
+Change button on it alone let you rewrite another team's sharing. `canFix()` is
+the single test — `ownedByMe && canShare` — and everything that offers to
+change something goes through it: the tick box, the row action, `Select all`,
+the access dialog, and the plan's estimate.
+
 **Drive hides named grants on files owned by other people.** Risk levels are
 reliable there; "who exactly has access" is not. Do not invent it.
 
@@ -316,6 +323,13 @@ not just the absence of `FAIL`.
 Working: scanning three scopes (one hidden), risk classification, bulk access
 changes, pagination, jump-to-section, scheduled monitoring with multiple
 recipients, pause/resume, mobile layout.
+
+Files owned by other people are read-only here. They are still listed and still
+classified, but they carry **Remind owner** — a `mailto:` naming the file, its
+risk and its link — instead of Change. They cannot be ticked, are left out of
+`Select all` and of the plan's time estimate, and the footer says how many
+there are. The reasoning is not only that Drive would refuse the write: quietly
+re-sharing another team's document is not this tool's business.
 
 Hidden but intact: the "Shared with me" scope. Remove `hidden` on the button in
 `#scopeSeg` to restore it. Hidden at Trung's request.

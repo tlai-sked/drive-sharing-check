@@ -550,6 +550,13 @@
   }
   .fix-btn:hover:not(:disabled) { color: var(--blue900); text-decoration: underline; }
   .fix-btn:disabled { opacity: 0.55; cursor: default; }
+  /* Deliberately not blue: it opens an email, it does not change anything. */
+  .remind-btn {
+    font: inherit; font-size: 14.9px; font-weight: 500; cursor: pointer;
+    padding: 6px 0; border-radius: var(--r);
+    background: transparent; border: 1px solid transparent; color: var(--n700);
+  }
+  .remind-btn:hover { color: var(--n900); text-decoration: underline; }
   .row-open { color: var(--n700); font-size: 14.4px; font-weight: 500; }
   .row-open:hover { color: var(--blue800); text-decoration: underline; }
   .row-fixed { opacity: 0.55; }
@@ -862,14 +869,16 @@
     /* .row .cell + .cell carries a 6px top margin and outranks the shorthand
        above, so the footer states its own gap. */
     .row .cell + .cell.fix-cell { margin-top: 12px; }
-    .row .fix-btn, .row .no-share, .row .row-open {
+    .row .fix-btn, .row .remind-btn, .row .no-share, .row .row-open {
       height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
       font-size: 14.9px; font-weight: 500; background: transparent; border: 0; border-radius: 0;
       white-space: nowrap;
     }
-    .row .fix-btn, .row .no-share { flex: 1; border-right: 1px solid var(--n250); }
+    .row .fix-btn, .row .remind-btn, .row .no-share { flex: 1; border-right: 1px solid var(--n250); }
     .row .fix-btn { color: var(--blue800); }
     .row .fix-btn:hover:not(:disabled) { background: var(--n150); }
+    .row .remind-btn { color: var(--n700); }
+    .row .remind-btn:hover { background: var(--n150); }
     .row .no-share { color: var(--n500); }
     .row .row-open { display: inline-flex; flex: none; width: 106px; color: var(--n700); }
     .row .fixed-flag { display: inline-flex; align-items: center; height: 44px; padding-left: 15px; }
@@ -1101,7 +1110,7 @@
   </div>
 
 <div class="drawer-foot">
-    <span style="font-size:13.2px;color:var(--n600)">Stored in this browser only &middot; <span id="buildStamp" title="If this looks old, reload with Cmd+Shift+R">12 Sep 09:27 &middot; a7fd332</span></span>
+    <span style="font-size:13.2px;color:var(--n600)">Stored in this browser only &middot; <span id="buildStamp" title="If this looks old, reload with Cmd+Shift+R">12 Sep 20:14 &middot; a09c283</span></span>
     <button type="button" class="link-btn" id="openGuide">Setup guide →</button>
   </div>
 </aside>
@@ -3295,8 +3304,55 @@ function selectionHasBroadAccess() {
 let accessTargets = [];
 const accessChoice = { who: "restricted", role: "reader", broad: "remove" };
 
+/* Opens the user's mail client with the file named and nothing changed. mailto
+   rather than sending anything ourselves: the tool has no send-mail scope, and
+   a message that arrives from a person is the one that gets acted on. */
+function remindMailto(row) {
+  if (!row) return null;
+  const name = row.dataset.fileName || "a file";
+  const to = row.dataset.ownerEmail || "";
+  if (!to) return null;
+  const lines = [
+    "Hi,",
+    "",
+    "You own this file in Drive and a sharing check has flagged it:",
+    "",
+    "  " + name,
+  ];
+  if (row.dataset.permLabel) lines.push("  " + row.dataset.permLabel);
+  if (row.dataset.risk) lines.push("  Flagged as: " + row.dataset.risk);
+  if (row.dataset.fileUrl) lines.push("  " + row.dataset.fileUrl);
+  lines.push("",
+    "Only the owner can change how it is shared, so I have not touched it.",
+    "Could you take a look when you get a chance?",
+    "");
+  const me = lastSignedInAs || account || "";
+  lines.push(me ? "Thanks,\n" + me : "Thanks");
+
+  return "mailto:" + to +
+    "?subject=" + encodeURIComponent("Drive sharing \u2014 please review \u201c" + name + "\u201d") +
+    "&body=" + encodeURIComponent(lines.join("\n"));
+}
+
+function remindOwner(row) {
+  const url = remindMailto(row);
+  if (url) window.location.href = url;
+}
+
 function openAccess(rows) {
   if (!rows.length) return;
+  // Rows for other people's files carry no Change button and cannot be ticked,
+  // but a stale selection left over from an earlier render could still arrive
+  // here. Refusing in the open beats a 403 from Drive that blames the account.
+  const notMine = rows.filter((r) => r.dataset.ownedByMe === "false");
+  if (notMine.length) {
+    rows = rows.filter((r) => r.dataset.ownedByMe !== "false");
+    if (!rows.length) {
+      showNotice("info", "These files are not yours to change",
+        "Someone else owns them. Use Remind owner to ask the person who can.");
+      return;
+    }
+  }
   accessTargets = rows;
   accessChoice.who = "restricted";
   accessChoice.role = "reader";
@@ -3465,6 +3521,8 @@ document.addEventListener("change", (e) => {
 document.addEventListener("click", (e) => {
   const one = e.target.closest(".fix-btn");
   if (one) { openAccess([one.closest(".row")]); return; }
+  const remind = e.target.closest(".remind-btn");
+  if (remind) { remindOwner(remind.closest(".row")); return; }
   if (e.target.closest("#changeSelected")) { openAccess(selectedRows()); return; }
   if (e.target.closest("#clearSelection")) {
     document.querySelectorAll(".row-box").forEach((b) => { b.checked = false; });
@@ -4217,6 +4275,16 @@ function yearOf(iso) {
   return isFinite(year) ? String(year) : null;
 }
 
+/* A file someone else owns is not ours to change. Drive would refuse the write
+   anyway, but the point is not the API: quietly re-sharing another team's
+   document is not a thing this tool should do. The only honest action is to
+   tell the person who can. `canShare` is not enough on its own — Drive reports
+   it true for a file you were given manage rights on, which you still do not
+   own. */
+function canFix(f) {
+  return f.ownedByMe === true && f.canShare === true;
+}
+
 /* ---------------------------- folder lookup --------------------------- */
 /* Drive only gives a parent folder id, never a name, on the file resource.
    One extra call per unique folder resolves it, cached and batched so a
@@ -4530,10 +4598,13 @@ function groupHtml(risk, rows) {
       '<div class="grouphead"><span class="lozenge ' + tone + '">' + risk + '</span>' +
       '<span class="caption">' + escapeHtml(def.title) + '</span>' +
       '<span class="count">' + rows.length + (rows.length === 1 ? ' file' : ' files') + '</span>' +
-      ((risk === "Critical" || risk === "Warning")
-        ? '<label class="select-all" title="Selects every file in this group, including any on other pages">' +
+      // Count what can actually be ticked. Offering "Select all 8" when six of
+      // them belong to other people promises a bulk change that cannot happen.
+      ((risk === "Critical" || risk === "Warning") && rows.filter(canFix).length
+        ? '<label class="select-all" title="Selects every file in this group you can change, ' +
+          'including any on other pages. Files owned by other people are left out.">' +
           '<input type="checkbox" class="select-all-box" data-risk="' + risk + '" />' +
-          ' Select all ' + rows.length + '</label>'
+          ' Select all ' + rows.filter(canFix).length + '</label>'
         : "") +
       '</div>' +
       rows.map((f) => {
@@ -4548,8 +4619,12 @@ function groupHtml(risk, rows) {
           ' data-perm-id="' + escapeHtml(f.permId || "") + '"' +
           ' data-perm-kind="' + escapeHtml(f.permKind || "") + '"' +
           ' data-is-folder="' + (f.isFolder === true) + '"' +
+          ' data-owned-by-me="' + (f.ownedByMe !== false) + '"' +
+          ' data-owner-email="' + escapeHtml(f.ownerEmail || "") + '"' +
+          ' data-file-url="' + escapeHtml(f.url) + '"' +
+          ' data-perm-label="' + escapeHtml(f.perm || "") + '"' +
           ' data-file-name="' + escapeHtml(f.name) + '">' +
-          ((risk === "Critical" || risk === "Warning") && f.canShare
+          ((risk === "Critical" || risk === "Warning") && canFix(f)
             ? '<div class="pick"><input type="checkbox" class="row-box" /></div>'
             : '<div class="pick"></div>') +
           '<div><a class="name" href="' + escapeHtml(f.url) +
@@ -4565,9 +4640,14 @@ function groupHtml(risk, rows) {
           escapeHtml(folderName) + "</a></div>" +
           '<div class="cell muted"><span class="cell-label">Last changed</span>' + escapeHtml(changed || "—") + "</div>" +
           ((risk === "Critical" || risk === "Warning")
-            ? '<div class="cell fix-cell">' + (f.canShare
+            ? '<div class="cell fix-cell">' + (canFix(f)
                 ? '<button class="fix-btn">Change</button>'
-                : '<span class="no-share" title="You do not have permission to change sharing on this file">Owner only</span>')
+                : f.ownedByMe === false
+                  ? (f.ownerEmail
+                      ? '<button class="remind-btn" title="Email ' + escapeHtml(f.ownerEmail) +
+                        '. Nothing on this file is changed.">Remind owner</button>'
+                      : '<span class="no-share" title="Someone else owns this file. Only its owner can change how it is shared.">Owner only</span>')
+                  : '<span class="no-share" title="Drive does not allow this account to change sharing on this file.">Cannot change</span>')
               + '<a class="row-open" href="' + escapeHtml(f.url) +
                 '" target="_blank" rel="noreferrer noopener">Open</a>'
               + "</div>"
@@ -4616,10 +4696,17 @@ function groupHtml(risk, rows) {
   maybeCelebrate(result);
   el("selectionBar").hidden = true;
   plan.findings = result.findings || [];
-  plan.counts = result.counts;
+  // The summary cards still count every finding — you want to know about a
+  // risk you cannot fix. The plan must not, or it books time for work that
+  // cannot happen.
+  plan.counts = { Critical: 0, Warning: 0 };
+  for (const f of plan.findings) {
+    if (f.risk !== "Critical" && f.risk !== "Warning") continue;
+    if (canFix(f)) plan.counts[f.risk] += 1;
+  }
   plan.busy = [];
   plan.availChecked = false;
-  const actionable = (result.counts.Critical || 0) + (result.counts.Warning || 0);
+  const actionable = plan.counts.Critical + plan.counts.Warning;
   el("planBtn").hidden = actionable === 0;
 
   const caveats = [];
@@ -4640,6 +4727,15 @@ function groupHtml(risk, rows) {
     caveats.push("<p>On files owned by other people Drive returns link and organisation-wide " +
       "grants but hides individual named grants, so risk levels are reliable while the list of " +
       "specific people is not.</p>");
+  }
+  const notMine = (result.findings || []).filter(function (f) {
+    return (f.risk === "Critical" || f.risk === "Warning") && f.ownedByMe === false;
+  }).length;
+  if (notMine) {
+    caveats.push("<p>" + notMine + " flagged item" + (notMine === 1 ? " is" : "s are") +
+      " owned by someone else. Sharing on those cannot be changed here and they are not " +
+      "counted in the plan \u2014 use <strong>Remind owner</strong> to ask the person who " +
+      "can.</p>");
   }
   // The two standing caveats were removed. What is left only appears when it
   // applies: unreachable subfolders, and hidden named grants on other people's

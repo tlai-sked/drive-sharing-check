@@ -76,6 +76,16 @@ may start working again and the script becomes unnecessary. Confirm before
 deleting it, and keep the reasoning either way — the error message will not
 help the next person.
 
+### Anything that offers to change a file
+
+| Also change | Why |
+|---|---|
+| route it through `canFix()` | ownership is the gate, not `capabilities.canShare` — Drive reports that true on a file you were merely granted manage rights to |
+| `tests/qa_ownership.js` | it covers the tick box, the row action, `Select all`, the access dialog, the plan count and the phone layout. A new surface that can change sharing needs a case there |
+
+Adding a new way to act on a file and forgetting this gate is silent: it looks
+right until someone rewrites another team's sharing.
+
 ### A function in `apps-script/Code.gs`
 
 | Also change | Why |
