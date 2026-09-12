@@ -11,11 +11,21 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering, Skedulo.
 
 | File | What it is |
 |---|---|
-| `drive-sharing-check-local.html` | The whole tool. Self-contained: CSS, JS, SVG icons, no dependencies except Google's sign-in library. |
-| `index.html` | Byte-identical copy, named for web hosting. **Keep in sync after every change.** |
-| `apps-script/Code.gs` | The scheduled watcher. Runs in Google Apps Script. |
+| `index.html` | The whole tool, and the only copy. Self-contained: CSS, JS, SVG icons, no dependencies except Google's sign-in library. |
+| `apps-script/Code.gs` | The scheduled watcher. Runs in Google Apps Script, emails a report. Independent of the HTML — it is not this page's backend. |
 | `apps-script/appsscript.json` | Manifest. Pins the OAuth scopes — without it Apps Script infers broader ones. |
-| `apps-script/README.md` | Setup and troubleshooting for the watcher. |
+| `docs/change-map.md` | What else has to change when you change something. |
+| `scripts/check.mjs` | The couplings nothing else can see. `node scripts/check.mjs`. |
+
+**One HTML file, deliberately.** There were three: `drive-sharing-check-local.html`,
+`index.html`, and `drive-check/index.html` — three separate downloads of the
+same tool, taken minutes apart. They all carried the same build stamp
+(`11 Sep 23:29 · f09c39d`) yet differed in content, so the stamp could not tell
+them apart; the oldest was missing the mobile action bar entirely. The rule
+that used to live here — "keep the copies in sync after every change" — is the
+kind a person forgets, and it had already been broken. Git holds the history
+now. If you need a differently-named copy for hosting, rename or symlink at
+deploy time; do not commit a second file.
 
 There is no build step. Open the HTML, or serve it over http.
 

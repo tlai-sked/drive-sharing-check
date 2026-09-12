@@ -12,62 +12,54 @@
 // Add a check the FIRST time something gets past you, not before. Every check
 // below names a mistake that had already happened when it was written.
 
-import { readFileSync, existsSync, statSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 
 const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : "");
 const problems = [];
 const fail = (check, detail, why) => problems.push({ check, detail, why });
 
-// ── 1. The HTML copies must be byte-identical ─────────────────────
-// CLAUDE.md states the rule: "Byte-identical copy, named for web hosting.
-// Keep in sync after every change." Nothing enforced it, and they drifted by
-// 207 chunks — so the hosted page and the local page behaved differently.
+// ── 1. There must be exactly one HTML file ────────────────────────
+// There were three, all carrying the same build stamp yet differing in
+// content — so the stamp could not tell them apart, and the oldest was
+// missing a whole feature. A second copy is how that starts again.
 {
-  const copies = ["index.html", "drive-sharing-check-local.html", "drive-check/index.html"]
-    .filter(existsSync);
+  const stray = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === ".git" || e.name === "node_modules") continue;
+      const p = dir === "." ? e.name : `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".html") && p !== "index.html") stray.push(p);
+    }
+  };
+  walk(".");
+  for (const p of stray) {
+    fail("second-html-copy", p,
+      "only index.html should exist — rename or symlink at deploy time instead");
+  }
+  if (!existsSync("index.html")) {
+    fail("missing-tool", "index.html", "the tool itself is gone");
+  }
+}
 
-  const hash = (p) => createHash("md5").update(readFileSync(p)).digest("hex");
-  const seen = new Map();
-  for (const p of copies) seen.set(p, hash(p));
-
-  const distinct = new Set(seen.values());
-  if (distinct.size > 1) {
-    const newest = copies.reduce((a, b) => (statSync(a).mtimeMs > statSync(b).mtimeMs ? a : b));
-    for (const [p, h] of seen) {
-      if (h !== seen.get(newest)) {
-        fail("html-copies-drifted", p,
-          `differs from ${newest} (the newest). CLAUDE.md requires these be identical`);
+// ── 2. Files named in the CLAUDE.md table must exist ──────────────
+// The Files table listed apps-script/README.md, which was never written. A
+// table of contents pointing at nothing is worse than no table.
+//
+// Only TABLE ROWS are checked. Prose may name a file that is deliberately gone
+// — the history of why a copy was deleted is worth keeping.
+{
+  for (const line of read("CLAUDE.md").split("\n")) {
+    if (!line.trimStart().startsWith("|")) continue;
+    for (const [, path] of line.matchAll(/`([\w./-]+\.(?:html|gs|json|md|command|mjs))`/g)) {
+      if (!existsSync(path)) {
+        fail("doc-names-missing-file", `CLAUDE.md table lists \`${path}\``, "no such file");
       }
     }
   }
 }
 
-// ── 2. Files named in CLAUDE.md must exist ────────────────────────
-// The Files table listed apps-script/README.md, which was never written. A
-// table of contents pointing at nothing is worse than no table.
-{
-  const doc = read("CLAUDE.md");
-  for (const [, path] of doc.matchAll(/`([\w./-]+\.(?:html|gs|json|md|command|mjs))`/g)) {
-    if (!existsSync(path)) {
-      fail("doc-names-missing-file", `CLAUDE.md mentions \`${path}\``, "no such file");
-    }
-  }
-}
-
-// ── 3. Every HTML copy must be listed in CLAUDE.md ────────────────
-// drive-check/index.html appeared as a third copy and was documented nowhere,
-// so nobody could know whether it mattered.
-{
-  const doc = read("CLAUDE.md");
-  for (const p of ["index.html", "drive-sharing-check-local.html", "drive-check/index.html"]) {
-    if (existsSync(p) && !doc.includes(p)) {
-      fail("undocumented-copy", p, "exists but CLAUDE.md never mentions it");
-    }
-  }
-}
-
-// ── 4. OAuth scopes must stay pinned ──────────────────────────────
+// ── 3. OAuth scopes must stay pinned ──────────────────────────────
 // appsscript.json pins the scopes on purpose: without it Apps Script infers
 // broader ones from the code. An empty or missing list is a silent widening.
 {
