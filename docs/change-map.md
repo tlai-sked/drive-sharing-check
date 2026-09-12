@@ -65,6 +65,17 @@ behaviour deliberately, change the test and keep its name honest; if you cannot
 say what a test would have caught, it should not exist. A green suite proves
 nothing until you have watched it go red — break the code on purpose first.
 
+### The git remote, or anything about how this repo is hosted
+
+| Also change | Why |
+|---|---|
+| re-test `sh scripts/deploy.sh` | the Vercel CLI reads the git remote and tries to reach that repository. A private remote it cannot read makes `vercel deploy` hang and fail at "Building…" with `fetch failed`, which names nothing useful. The script exists to sidestep exactly this |
+
+If the remote ever becomes one Vercel can read, plain `vercel deploy --prod`
+may start working again and the script becomes unnecessary. Confirm before
+deleting it, and keep the reasoning either way — the error message will not
+help the next person.
+
 ### A function in `apps-script/Code.gs`
 
 | Also change | Why |

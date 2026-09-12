@@ -73,12 +73,22 @@ git config core.hooksPath scripts/git-hooks    # once per clone
 ## Deploy
 
 ```
-vercel deploy --prod
+sh scripts/deploy.sh
 ```
 
+It deploys, then checks that the live page is the file you just sent and that
+the internal docs are not reachable. It fails loudly if either is wrong.
+
+**Do not run `vercel deploy --prod` from the repo root.** It hangs and dies at
+"Building…" with `fetch failed`, and the message says nothing about the cause:
+the CLI reads this repo's git remote and tries to reach a private GitHub repo
+the Vercel account cannot read. The script stages the one uploaded file in a
+directory with no remote. `CLAUDE.md` has the full account.
+
 `.vercelignore` is an allowlist: only `index.html` is uploaded, because this
-repo carries internal notes that must not be served publicly. After deploying,
-confirm `/CLAUDE.md` returns 404 and not 200.
+repo carries internal notes that must not be served publicly. `vercel deploy
+--dry` prints exactly what would go up — check it if you add a file that needs
+to be public.
 
 Any new hosting origin must also be added to **Authorised JavaScript origins**
 on the OAuth client in the Google Cloud console, or nobody can sign in.

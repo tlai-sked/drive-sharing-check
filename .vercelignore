@@ -3,3 +3,10 @@
 # open issues — that must not end up on a public URL.
 *
 !index.html
+
+# Redundant with the catch-all above, kept only so the intent is obvious at a
+# glance. These were once suspected of breaking deploys; they were not. Do not
+# reintroduce that explanation without evidence.
+node_modules
+.git
+.playwright-mcp

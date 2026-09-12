@@ -17,6 +17,7 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering, Skedulo.
 | `apps-script/appsscript.json` | Manifest. Pins the OAuth scopes — without it Apps Script infers broader ones. |
 | `docs/change-map.md` | What else has to change when you change something. |
 | `scripts/check.mjs` | The couplings nothing else can see. `node scripts/check.mjs`. |
+| `scripts/deploy.sh` | Deploys, then verifies the live page and that no internal file is reachable. |
 | `tests/` | The suites, and the harness that loads both halves of the tool. `npm test`. |
 | `package.json` | Exists only so the tests can have `jsdom`. Not part of the tool. |
 | `.vercelignore` | An allowlist, not a blocklist. Keeps everything but the tool off the public URL. |
@@ -61,8 +62,25 @@ There is no test runner in the repo — see Testing.
 ## Hosting
 
 Live at **https://drive-sharing-check.vercel.app** — Vercel, scope `HOME`,
-project `drive-sharing-check`. Deploy with `vercel deploy --prod` from the repo
-root. There is nothing to build; Vercel uploads the file and serves it.
+project `drive-sharing-check`. Deploy with `sh scripts/deploy.sh`. There is
+nothing to build; Vercel uploads the one file and serves it.
+
+**`vercel deploy --prod` from the repo root does not work, and the error does
+not say why.** The CLI reads the working directory's git remote and tries to
+associate the deployment with that repository. The remote here is a private
+GitHub repo the Vercel account cannot read, so the call hangs and the deploy
+dies at "Building…" with `fetch failed`. Nothing in that message mentions git.
+The script stages the single uploaded file in a directory with no remote, which
+is why it works. `vercel deploy --dry` reports `fileCount: 1`, so staging
+changes nothing about what ships.
+
+Found by bisection after three wrong explanations, each disproved by deploying
+a directory that isolated it — `node_modules` was blamed first and was not the
+cause, nor was `package.json`, nor the file count. A full copy of this repo
+with `.git` intact but the remote removed deploys fine. Every deploy before the
+GitHub remote existed succeeded; every one after it failed. If someone connects
+the repo to Vercel properly this constraint goes away — but read the warning
+below before doing that.
 
 It replaced a Netlify site. Take the old one down once this is confirmed
 working, and remove its origin from the OAuth client — a registered origin
