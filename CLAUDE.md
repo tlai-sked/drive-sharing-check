@@ -11,6 +11,7 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering, Skedulo.
 
 | File | What it is |
 |---|---|
+| `README.md` | What the tool is, how to run it, and how to set up the watcher. Start here. |
 | `index.html` | The whole tool, and the only copy. Self-contained: CSS, JS, SVG icons, no dependencies except Google's sign-in library. |
 | `apps-script/Code.gs` | The scheduled watcher. Runs in Google Apps Script, emails a report. Independent of the HTML — it is not this page's backend. |
 | `apps-script/appsscript.json` | Manifest. Pins the OAuth scopes — without it Apps Script infers broader ones. |

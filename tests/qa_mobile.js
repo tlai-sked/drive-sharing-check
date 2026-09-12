@@ -152,6 +152,76 @@ s.test("the access dialog's segmented controls get their end caps on a phone too
   page.close();
 });
 
+// ── the scope picker at 390px ─────────────────────────────────────
+// Both bugs below were reported from a phone and measured in Chrome at 390px.
+// jsdom cannot lay out, so these guard the CSS that produced the numbers rather
+// than the numbers themselves. The measurements are in the comments; redo them
+// in a browser if you change these rules.
+
+s.test("the scope field's flex-basis cannot become a height", () => {
+  // .combo is sized `flex: 1 1 340px` for the desktop row. The phone block
+  // turns that row into a column, and flex-basis is measured along the main
+  // axis — so 340px silently became a HEIGHT. The results list is positioned at
+  // `top: calc(100% + 4px)` of .combo, so it landed 344px below the field:
+  // measured gap between field and results was 310px, results off-screen.
+  const page = loadPage();
+  const css = styleText(page);
+  const block = phoneBlock(css);
+
+  assert(/\.combo\s*\{[^}]*flex:\s*1\s+1\s+340px/.test(css),
+    "the desktop .combo rule changed — re-measure before trusting this guard");
+  assert(/\.scope-target\s*\{[^}]*flex-direction:\s*column/.test(block),
+    "the scope row no longer stacks on phones, so this guard may be obsolete");
+
+  const rule = /\.scope-target\s+\.combo\s*\{([^}]*)\}/.exec(block);
+  assert(rule, ".scope-target has no phone rule for .combo at all");
+  assert(/flex:\s*0\s+0\s+auto/.test(rule[1]),
+    "the combo keeps its 340px flex-basis, which a column reads as a height");
+  page.close();
+});
+
+s.test("both scope buttons keep a bottom border", () => {
+  // They sit side by side, so each needs its whole box. The stacked-layout rule
+  // above treats the bottom edge as a divider between rows and drops it.
+  const page = loadPage();
+  const block = phoneBlock(styleText(page));
+
+  const base = /\.scope-bar\s+\.seg\s+button\s*\{([^}]*)\}/.exec(block);
+  assert(base, "no phone rule for the scope buttons");
+  assert(!/border-bottom-width:\s*0(?!\.)/.test(base[1]),
+    "the scope buttons zero their bottom border, leaving the row open underneath");
+  assert(/border-bottom-width:\s*1px/.test(base[1]), "no bottom border width is set");
+  page.close();
+});
+
+s.test("the last scope button restores the border style, not only its width", () => {
+  // The stacked rule sets `border-bottom: none`. `none` is a border STYLE, and
+  // a border with no style computes to 0px however wide it is declared — so
+  // setting the width alone left the right-hand button open at the bottom.
+  // Verified in Chrome: borderBottomStyle "none", borderBottomWidth "0px".
+  const page = loadPage();
+  const block = phoneBlock(styleText(page));
+
+  assert(/\.seg\s+button\.seg-last\s*\{[^}]*border-bottom:\s*none/.test(block),
+    "the stacked rule no longer drops the bottom edge — this guard may be obsolete");
+
+  const last = /\.scope-bar\s+\.seg\s+button\.seg-last\s*\{([^}]*)\}/.exec(block);
+  assert(last, "no phone rule for the last scope button");
+  assert(/border-bottom-width:\s*1px/.test(last[1]), "seg-last sets no bottom width");
+  assert(/border-bottom-style:\s*solid/.test(last[1]),
+    "seg-last restores the width but not the style, so it still computes to 0px");
+  page.close();
+});
+
+s.test("the pressed scope button's bottom edge matches its other three", () => {
+  // Without this the selected button is a blue box with one grey edge.
+  const page = loadPage();
+  const block = phoneBlock(styleText(page));
+  assert(/\.scope-bar\s+\.seg\s+button\[aria-pressed="true"\]\s*\{[^}]*border-bottom-color:\s*var\(--blue800\)/.test(block),
+    "the pressed button would show a grey bottom edge on a blue box");
+  page.close();
+});
+
 s.test("the results table drops its column headers rather than overflowing", () => {
   const page = loadPage();
   const css = phoneBlock(styleText(page));

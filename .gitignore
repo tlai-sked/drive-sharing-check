@@ -8,3 +8,6 @@
 
 # Test tooling only. The tool itself has no dependencies.
 node_modules/
+
+# Playwright MCP scratch output
+.playwright-mcp/

@@ -790,13 +790,26 @@
     .seg button.seg-first { border-radius: var(--r) var(--r) 0 0; }
     .seg button.seg-last { border-radius: 0 0 var(--r) var(--r); border-bottom: none; }
     .scope-bar .seg { flex-direction: row; }
-    .scope-bar .seg button { flex: 1; text-align: center; border-bottom-width: 0; border-radius: 0; }
+    .scope-bar .seg button {
+      flex: 1; text-align: center; border-radius: 0;
+      /* The stacked rule above turns the bottom edge into a divider. These two
+         sit side by side, so each needs its own box back. */
+      border-bottom-width: 1px; border-bottom-color: var(--n400);
+    }
+    .scope-bar .seg button[aria-pressed="true"] { border-bottom-color: var(--blue800); }
     .scope-bar .seg button.seg-first { border-radius: var(--r) 0 0 var(--r); }
-    .scope-bar .seg button.seg-last { border-radius: 0 var(--r) var(--r) 0; }
+    /* The stacked rule drops the last button's bottom edge because it is the
+       end of the column. In a row it is just the right-hand button. `none` is a
+       border STYLE, and a border with no style computes to zero width whatever
+       the width says — so the style has to come back too. */
+    .scope-bar .seg button.seg-last {
+      border-radius: 0 var(--r) var(--r) 0;
+      border-bottom-width: 1px; border-bottom-style: solid;
+    }
 
     /* The search field and its button were side by side in 390px. */
     .scope-target { flex-direction: column; align-items: stretch; gap: 8px; }
-    .scope-target .combo { width: 100%; }
+    .scope-target .combo { width: 100%; flex: 0 0 auto; }
     #findTarget { width: 100%; }
 
     /* The scan summary keeps its own line; planning moved to the docked bar. */
@@ -1088,7 +1101,7 @@
   </div>
 
 <div class="drawer-foot">
-    <span style="font-size:13.2px;color:var(--n600)">Stored in this browser only &middot; <span id="buildStamp" title="If this looks old, reload with Cmd+Shift+R">12 Sep 08:22 &middot; 0396adf</span></span>
+    <span style="font-size:13.2px;color:var(--n600)">Stored in this browser only &middot; <span id="buildStamp" title="If this looks old, reload with Cmd+Shift+R">12 Sep 09:27 &middot; a7fd332</span></span>
     <button type="button" class="link-btn" id="openGuide">Setup guide →</button>
   </div>
 </aside>

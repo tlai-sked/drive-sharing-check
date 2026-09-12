@@ -13,7 +13,8 @@
  * Nothing leaves your Google tenancy. No server, no database, no stored
  * credentials — the script runs as you, authorised once.
  *
- * Requires the Advanced Drive Service (v3). See README.md.
+ * Requires the Advanced Drive Service (v3). Setup steps are in README.md at
+ * the repo root.
  */
 
 // ----------------------------------------------------------------------------
