@@ -1,0 +1,4 @@
+.DS_Store
+
+# clasp credentials — never commit these
+.clasprc.json
