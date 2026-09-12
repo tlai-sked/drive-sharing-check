@@ -27,7 +27,7 @@ copy you happened to open.
 
 | Also change | Why |
 |---|---|
-| the build stamp in the drawer footer | it is how you tell a stale cached page from a fresh one. A wrong stamp already cost two rounds of debugging a bug that was fixed. The recipe is in `CLAUDE.md` |
+| the build stamp in the drawer footer | it is how you tell a stale cached page from a fresh one. A wrong stamp already cost two rounds of debugging a bug that was fixed. The recipe is in `docs/hosting.md` |
 | `CLAUDE.md` Files table | if you added or removed a file |
 
 There used to be three copies of the HTML, 207 chunks apart, all wearing the
@@ -104,7 +104,7 @@ Everything ending in `_` is private to the file.
 |---|---|
 | `apps-script/appsscript.json` | pinned deliberately — without it Apps Script infers broader scopes from the code |
 | re-authorise the script | existing users keep the old grant until they do; the change appears to work for you and fail for them |
-| `CLAUDE.md` | the scopes are a security claim about this tool, not a detail |
+| `docs/architecture.md` and `docs/requirements.md` | the scopes are a security claim about this tool, not a detail |
 
 ### The Drive API query strings
 

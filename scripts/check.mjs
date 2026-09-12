@@ -120,6 +120,31 @@ const fail = (check, detail, why) => problems.push({ check, detail, why });
   }
 }
 
+// ── 5. CLAUDE.md has to stay short enough to be read ──────────────
+// It is loaded into context on every session, so length is a cost paid every
+// time. When it outgrew this, the detail moved into docs/ and CLAUDE.md kept
+// the rules and the pointers. Raising the cap is not the fix.
+{
+  const LIMIT = 200;
+  const lines = read("CLAUDE.md").split("\n").length;
+  if (lines > LIMIT) {
+    fail("claude-md-too-long", `CLAUDE.md is ${lines} lines`,
+      `over the ${LIMIT}-line cap — move detail into docs/ and link to it, do not raise the cap`);
+  }
+}
+
+// ── 6. Nothing may point at instructions that are not there ───────
+// Trimming CLAUDE.md moved the build-stamp recipe out and left a pointer to a
+// document that did not contain it. The pointer looked fine; the recipe was
+// gone. Anything named as "the recipe is in X" has to actually be in X.
+{
+  const stamp = read("docs/hosting.md");
+  if (!stamp.includes("hashlib") || !stamp.includes("buildStamp")) {
+    fail("missing-build-stamp-recipe", "docs/hosting.md",
+      "CLAUDE.md sends people here for the build-stamp recipe, and it is not here");
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────
 if (problems.length === 0) {
   console.log("✓ checks passed");

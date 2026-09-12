@@ -142,6 +142,11 @@ next mistake are two separate jobs; this tool is for the first.
 
 | File | What it holds |
 |---|---|
-| `CLAUDE.md` | Architecture and why it is like this, the hard-won gotchas, conventions, current state |
+| `CLAUDE.md` | The short version: the rules, the traps, and where to read more. Loaded by Claude Code every session. |
+| `docs/requirements.md` | What this tool must never do, and the decisions that are settled |
+| `docs/architecture.md` | Why it is built this way, and what each choice rules out |
+| `docs/gotchas.md` | Every trap, with the failure it caused |
+| `docs/hosting.md` | Deploying, OAuth origins, and the build stamp |
+| `docs/testing.md` | How to test here and what jsdom will not do |
 | `docs/change-map.md` | What else you have to change when you change something |
 | `scripts/check.mjs` | The couplings a script can catch, each one added after it got past someone |
