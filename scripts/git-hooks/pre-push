@@ -1,0 +1,6 @@
+#!/bin/sh
+# Install once:  git config core.hooksPath scripts/git-hooks
+node scripts/check.mjs || {
+  echo "Push blocked. Fix the above, or: git push --no-verify"
+  exit 1
+}
