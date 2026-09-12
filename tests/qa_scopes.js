@@ -138,6 +138,41 @@ s.test("scanning asks only for metadata, never for write", () => {
   page.close();
 });
 
+// ── which client ID gets used ─────────────────────────────────────
+// The hosted page carries one so a phone user never has to paste it. Blank it
+// and the phone flow breaks in a way that only shows up on a phone.
+
+s.test("the hosted page carries a client ID", () => {
+  const page = loadPage();
+  const hosted = page.read("DEFAULT_CLIENT_ID");
+  assert(hosted && hosted.trim(),
+    "DEFAULT_CLIENT_ID is empty — every visitor must now paste their own");
+  assert(hosted.endsWith(".apps.googleusercontent.com"),
+    `that does not look like a Google client ID: ${hosted}`);
+  equal(page.read("clientId"), hosted);
+  page.close();
+});
+
+s.test("the page says where the client ID came from", () => {
+  const page = loadPage();
+  includes(page.el("clientIdStatus").textContent, "hosted");
+  equal(page.el("clientIdStatus").hidden, false);
+  page.close();
+});
+
+s.test("a client ID in the link overrides the hosted one", () => {
+  const page = loadPage({ url: "http://localhost:8000/?client_id=from-the-link" });
+  equal(page.read("clientId"), "from-the-link");
+  includes(page.el("clientIdStatus").textContent, "link");
+  page.close();
+});
+
+s.test("a malformed query string does not strand the page without an ID", () => {
+  const page = loadPage({ url: "http://localhost:8000/?%%%" });
+  assert(page.read("clientId"), "the page fell back to no client ID at all");
+  page.close();
+});
+
 s.test("no client ID is an explained refusal, not a Google error", async () => {
   const page = loadPage();
   page.window.eval("clientId = null; fixToken = null;");

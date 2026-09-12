@@ -290,8 +290,17 @@ recipients, pause/resume, mobile layout.
 Hidden but intact: the "Shared with me" scope. Remove `hidden` on the button in
 `#scopeSeg` to restore it. Hidden at Trung's request.
 
-`DEFAULT_CLIENT_ID` at the top of the script is empty. Fill it before sharing so
-nobody has to create their own OAuth client.
+`DEFAULT_CLIENT_ID` is filled in, so nobody has to create their own OAuth
+client. It is a browser client ID in GCP project `840890137894` — public by
+design, and the page never touches the client secret. The precedence is
+`?client_id=` in the link, then this constant, then whatever is saved in the
+browser.
+
+Two consequences worth knowing. Every hosted origin has to be registered on
+*that* client, so a new host means a new entry in Authorised JavaScript
+origins. And who may sign in is decided by that client's OAuth consent screen,
+not by this page: on an Internal consent screen only Skedulo accounts can get
+through, which is what keeps a public URL from being a public tool.
 
 ---
 
