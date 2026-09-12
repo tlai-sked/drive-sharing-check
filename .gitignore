@@ -2,3 +2,6 @@
 
 # clasp credentials — never commit these
 .clasprc.json
+
+# Vercel's local project link. Machine-specific; the CLI recreates it.
+.vercel

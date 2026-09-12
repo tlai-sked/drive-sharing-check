@@ -77,6 +77,49 @@ const fail = (check, detail, why) => problems.push({ check, detail, why });
   }
 }
 
+// ── 4. Constants duplicated across the page and the script ────────
+// index.html and apps-script/Code.gs are separate programs that have to agree.
+// Nothing at runtime notices when they drift: a changed Drive query returns
+// zero rows and no error, so the report says everything is fine, and a changed
+// settings/status filename makes the two halves stop finding each other's
+// files in silence. Grep will not catch it either — the script spells the em
+// dash as the escape \u2014 where the page uses a literal one, so the two
+// spellings of the same string do not match as text. Compare decoded values.
+{
+  const SHARED = ["LINK_Q", "DOMAIN_Q", "OWNED", "SETTINGS_NAME", "STATUS_NAME"];
+  const page = read("index.html");
+  const script = read("apps-script/Code.gs");
+
+  const decode = (lit) =>
+    lit
+      .slice(1, -1)
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\(.)/g, "$1");
+
+  const valueOf = (src, name) => {
+    const m = src.match(
+      new RegExp(`\\bconst ${name}\\s*=\\s*("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')\\s*;`)
+    );
+    return m ? decode(m[1]) : null;
+  };
+
+  if (page && script) {
+    for (const name of SHARED) {
+      const inPage = valueOf(page, name);
+      const inScript = valueOf(script, name);
+      if (inPage === null || inScript === null) {
+        const where = inPage === null ? "index.html" : "apps-script/Code.gs";
+        fail("shared-constant-missing", name,
+          `not found in ${where} — if it was renamed, this check is now blind to it`);
+      } else if (inPage !== inScript) {
+        fail("shared-constant-drift", name,
+          `index.html has ${JSON.stringify(inPage)}, ` +
+          `apps-script/Code.gs has ${JSON.stringify(inScript)}`);
+      }
+    }
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────
 if (problems.length === 0) {
   console.log("✓ checks passed");

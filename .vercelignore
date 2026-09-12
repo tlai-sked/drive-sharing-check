@@ -1,0 +1,5 @@
+# Vercel serves whatever it uploads. Only the tool itself is public.
+# CLAUDE.md and docs/ carry internal notes — owner email, security design,
+# open issues — that must not end up on a public URL.
+*
+!index.html

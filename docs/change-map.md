@@ -27,14 +27,32 @@ copy you happened to open.
 
 | Also change | Why |
 |---|---|
-| the other HTML copies | they must stay byte-identical. They have already drifted once — 207 chunks apart, so the hosted page and the local page were different tools wearing the same name |
-| `CLAUDE.md` Files table | if you added or removed a copy |
+| the build stamp in the drawer footer | it is how you tell a stale cached page from a fresh one. A wrong stamp already cost two rounds of debugging a bug that was fixed. The recipe is in `CLAUDE.md` |
+| `CLAUDE.md` Files table | if you added or removed a file |
 
-`node scripts/check.mjs` compares them by hash.
+There used to be three copies of the HTML, 207 chunks apart, all wearing the
+same build stamp — so the hosted page and the local page were different tools
+with the same name. They were deleted in `96d24e8`. `node scripts/check.mjs`
+now fails if a second `.html` file appears anywhere in the repo, which is the
+enforceable version of the rule people kept forgetting.
 
-**Better than remembering:** make one file the real one and generate the rest,
-or delete the copies entirely. A rule a person has to remember on every save is
-a rule that will be broken.
+### A constant that exists in both the page and the script
+
+The page and the watcher are separate programs that must agree. Changing one
+side only is silent — no error, no log, on either side.
+
+| Also change | Why |
+|---|---|
+| `LINK_Q`, `DOMAIN_Q`, `OWNED` in the other file | strings sent to Google. A typo returns zero rows and no error — the report says everything is fine |
+| `SETTINGS_NAME`, `STATUS_NAME` in the other file | these two Drive file names are the only channel between the halves. Drift and the page stops configuring the script, and the script stops reporting status |
+| the classification — `classify` / `classify_`, `VERB`, `EDIT_ROLES`, the rank table | ported verbatim on purpose. If they diverge, an email and the page disagree about the same file |
+
+Note the spelling trap: the script writes `'Drive sharing check \u2014 settings'`
+where the page writes a literal `—`. Grepping for the em dash finds only one of
+the two.
+
+`node scripts/check.mjs` compares the query strings and the file names by exact
+text. The classification rules it cannot judge.
 
 ### A function in `apps-script/Code.gs`
 

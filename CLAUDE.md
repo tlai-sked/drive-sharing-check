@@ -16,6 +16,8 @@ Owner: Thao Lai (tlai@skedulo.com), Technical Support Engineering, Skedulo.
 | `apps-script/appsscript.json` | Manifest. Pins the OAuth scopes — without it Apps Script infers broader ones. |
 | `docs/change-map.md` | What else has to change when you change something. |
 | `scripts/check.mjs` | The couplings nothing else can see. `node scripts/check.mjs`. |
+| `.vercelignore` | An allowlist, not a blocklist. Keeps everything but the tool off the public URL. |
+| `start-drive-sharing-check.command` | Double-click launcher. Serves the folder on port 8000 — the only origin Google accepts for local sign-in. |
 
 **One HTML file, deliberately.** There were three: `drive-sharing-check-local.html`,
 `index.html`, and `drive-check/index.html` — three separate downloads of the
@@ -28,6 +30,58 @@ now. If you need a differently-named copy for hosting, rename or symlink at
 deploy time; do not commit a second file.
 
 There is no build step. Open the HTML, or serve it over http.
+
+---
+
+## Commands
+
+| Task | Command |
+|---|---|
+| Check the couplings a script can catch | `node scripts/check.mjs` |
+| Enable the pre-push hook — once per clone | `git config core.hooksPath scripts/git-hooks` |
+| Run the tool locally | `./start-drive-sharing-check.command` |
+
+By hand, `python3 -m http.server 8000` does the same job as the launcher.
+
+**The port must be 8000.** Google refuses `file://` addresses outright, and
+`localhost:3000` and `127.0.0.1:8000` are *different origins* to Google — all
+are refused at sign-in. `http://localhost:8000` is the only address registered
+on the OAuth client. The launcher stops with an explanation when 8000 is taken
+rather than quietly picking another port.
+
+There is no test runner in the repo — see Testing.
+
+---
+
+## Hosting
+
+Live at **https://drive-sharing-check.vercel.app** — Vercel, scope `HOME`,
+project `drive-sharing-check`. Deploy with `vercel deploy --prod` from the repo
+root. There is nothing to build; Vercel uploads the file and serves it.
+
+It replaced a Netlify site. Take the old one down once this is confirmed
+working, and remove its origin from the OAuth client — a registered origin
+nobody uses is a door left open.
+
+**`.vercelignore` is an allowlist.** It ignores `*` and then un-ignores
+`index.html`, because the repo carries internal notes — owner email, security
+design, open issues — that must not be served from a public URL. Anything new
+that genuinely has to be public must be un-ignored by name. Verify after a
+deploy that `/CLAUDE.md` returns 404, not 200.
+
+**The origin must be registered with Google, or nobody can sign in.** Add
+exactly `https://drive-sharing-check.vercel.app` to *Authorised JavaScript
+origins* on the OAuth client — no trailing slash, no path. Google matches the
+origin character for character.
+
+**Sign-in cannot work on preview deployments.** Every preview gets a fresh
+hostname and Google does not allow wildcard origins, so a preview can only ever
+show the page, never complete a sign-in. Test sign-in on production. This is
+the same constraint that blocks the Idea Hub move in Outstanding 1.
+
+Vercel serves the HTML as `cache-control: public, max-age=0, must-revalidate`
+by default, which is what the build stamp exists to protect against. Confirmed
+on the live URL; no `vercel.json` is needed to get it.
 
 ---
 
@@ -54,6 +108,34 @@ description of `Drive sharing check — settings`, and the script reads it. A
 description is *metadata*, so the script reads it with the
 `drive.metadata.readonly` scope it already has. The script writes its run status
 back the same way, into `Drive sharing check — status`.
+
+### The same logic runs twice
+
+The page and the watcher are separate programs that have to agree. Three groups
+of constants are duplicated between `index.html` and `apps-script/Code.gs`, and
+nothing at runtime will tell you they have drifted:
+
+| Duplicated in both | Why it matters |
+|---|---|
+| `LINK_Q`, `DOMAIN_Q`, `OWNED` | Strings sent to Google. A typo returns zero rows and no error — the scan simply reports that everything is fine. |
+| `SETTINGS_NAME`, `STATUS_NAME` | The contract between the two halves. See below. |
+| `classify`, `VERB`, `EDIT_ROLES`, the rank table | A port, not a shared module. See below. |
+
+**The two file names are the contract.** The page writes settings into
+`Drive sharing check — settings` and reads run status from
+`Drive sharing check — status`; the script does the reverse. Change either
+string on one side only and the halves stop finding each other's files —
+silently, with nothing logged on either side.
+
+**The classification is a port, not a shared module.** The script returns
+`{level, label}`; the page returns the same plus the fields the UI needs
+(`icon`, `permId`, `permKind`, `permRole`, `permDomain`, `permIndexed`). The
+risk rules themselves must stay identical, or an email and the page disagree
+about the same file. `classify_` in the script is marked "ported verbatim —
+keep in sync"; this is the other end of that note.
+
+`node scripts/check.mjs` compares the query strings and the two file names by
+exact text. It cannot judge the classification rules — those are on you.
 
 ### Scopes
 
@@ -103,6 +185,12 @@ fixtures using `'F'` as an ID will silently scan nothing.
 **MailApp rejects recipients with a leading space.** `"a@x.com, b@y.com"` sends
 only to the first. Save the list joined with `","` and strip spaces per address.
 
+**The script spells the em dash as an escape.** `Code.gs` has
+`'Drive sharing check \u2014 settings'` where the page has a literal `—`. Same
+string at runtime, so grepping for the em dash finds only the page's copy and
+you will conclude there is just one. Search for `SETTINGS_NAME` or
+`STATUS_NAME` instead.
+
 **Drive hides named grants on files owned by other people.** Risk levels are
 reliable there; "who exactly has access" is not. Do not invent it.
 
@@ -122,8 +210,7 @@ reliable there; "who exactly has access" is not. Do not invent it.
   pattern.
 - Every visual change needs a matching mobile check — the phone block is the
   last `@media (max-width: 640px)` in the stylesheet.
-- After any edit: copy the HTML over `index.html` and update the build stamp in
-  the drawer footer.
+- After any edit: update the build stamp in the drawer footer.
 
 ### Build stamp
 
@@ -133,7 +220,7 @@ Regenerate it after each change:
 
 ```python
 import hashlib, datetime, re
-p = 'drive-sharing-check-local.html'
+p = 'index.html'
 s = open(p, encoding='utf-8').read()
 s = re.sub(r'<span id="buildStamp"[^>]*>[^<]*</span>',
            '<span id="buildStamp" title="If this looks old, reload with Cmd+Shift+R">STAMP</span>', s)
@@ -146,14 +233,16 @@ open(p, 'w', encoding='utf-8').write(s.replace('>STAMP<', '>' + stamp + '<'))
 
 ## Testing
 
-Tests are Node scripts using `jsdom`, run directly: `node qa_whatever.js`.
-Each prints `N passed, M failed`.
+**There are no tests in this repo.** `node scripts/check.mjs` is a consistency
+checker, not a test suite. The table below is a specification for what to
+build, not a description of anything that runs today.
 
-**The suites from the original build session were lost when the environment
-reset. They are not in this repo. Rebuilding them and committing them is the
-highest-value first task.**
+The suites from the original build session were lost when the environment
+reset. Rebuilding them and committing them is the highest-value first task.
+They were Node scripts using `jsdom`, run directly — `node qa_whatever.js` —
+each printing `N passed, M failed`.
 
-What survived, and should be recreated first:
+What they covered, and should cover again:
 
 | Area | What it must cover |
 |---|---|
@@ -210,10 +299,13 @@ nobody has to create their own OAuth client.
    - Vercel preview URLs change per deploy and Google does not allow wildcard
      origins, so OAuth fails on previews. A fixed staging domain is needed.
 
-2. **Mobile Run check on the Netlify build** reportedly fails. Unresolved —
-   needs the exact error text from the phone. The tool distinguishes "browser
-   blocked the sign-in window" (iOS popup blocking) from "Google refused the
-   sign-in request" (origin not registered).
+2. **Mobile Run check** reportedly failed on the old Netlify build.
+   Unresolved — still needs the exact error text from the phone. The tool
+   distinguishes "browser blocked the sign-in window" (iOS popup blocking) from
+   "Google refused the sign-in request" (origin not registered). Moving to
+   Vercel does not by itself fix either: if it was the second kind, the new
+   origin has to be registered before sign-in works at all; if it was the
+   first, it is an iOS popup problem and the host is irrelevant.
 
 3. **Folder restructure** (roadmap item 5). Blocked on Trung's folder-to-audience
    table. Note: moving files does **not** fix existing over-sharing — Drive
