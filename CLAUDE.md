@@ -299,8 +299,12 @@ browser.
 Two consequences worth knowing. Every hosted origin has to be registered on
 *that* client, so a new host means a new entry in Authorised JavaScript
 origins. And who may sign in is decided by that client's OAuth consent screen,
-not by this page: on an Internal consent screen only Skedulo accounts can get
-through, which is what keeps a public URL from being a public tool.
+not by this page. That screen is set to **Internal**, so only Skedulo accounts
+get through — which is what keeps a public URL from being a public tool.
+
+In the current console these live under **Google Auth Platform**, not the old
+"OAuth consent screen" page: origins under **Clients**, the Internal/External
+setting under **Audience**.
 
 ---
 
@@ -321,13 +325,13 @@ through, which is what keeps a public URL from being a public tool.
    - Vercel preview URLs change per deploy and Google does not allow wildcard
      origins, so OAuth fails on previews. A fixed staging domain is needed.
 
-2. **Mobile Run check** reportedly failed on the old Netlify build.
-   Unresolved — still needs the exact error text from the phone. The tool
-   distinguishes "browser blocked the sign-in window" (iOS popup blocking) from
-   "Google refused the sign-in request" (origin not registered). Moving to
-   Vercel does not by itself fix either: if it was the second kind, the new
-   origin has to be registered before sign-in works at all; if it was the
-   first, it is an iOS popup problem and the host is irrelevant.
+2. ~~**Mobile Run check** failed on the old Netlify build.~~ Resolved
+   12 Sep 2026: works on a phone against the Vercel build once
+   `https://drive-sharing-check.vercel.app` was added to the client's
+   Authorised JavaScript origins. So it was "Google refused the sign-in
+   request" — an unregistered origin — not iOS popup blocking. Worth
+   remembering the next time a host changes: the symptom appears on the phone,
+   but the cause is a one-line entry in the Google console.
 
 3. **Folder restructure** (roadmap item 5). Blocked on Trung's folder-to-audience
    table. Note: moving files does **not** fix existing over-sharing — Drive
