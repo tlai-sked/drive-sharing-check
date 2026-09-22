@@ -96,13 +96,19 @@ Verified 22 Sep 2026 by reading the source, not by running it:
 
 | | Here | Their port |
 |---|---|---|
-| Scan, classify, bulk change, expiry, watched folders, pagination | yes | yes |
+| Scan, classify, bulk change, expiry, watched folders | yes | yes |
+| Paged results | yes | added 22 Sep 2026 — see the note below |
 | Remind owner, `canFix` ownership gate | yes | yes, and refused at the write layer too |
 | "Shared with me" scope | yes, hidden | no |
 | Plan time to fix (Calendar) | yes | no |
 | People picker when sharing | yes | no |
 | Jump to section | yes | no |
 | Docked phone action bar | yes | no |
+
+The pagination row was a mistake in an earlier version of this table. A grep
+for `page` matched `pageToken` and `pageSize` — Drive's *API* paging inside
+`scan.js` — and was read as a paged results list, which their port did not
+have. Grep for what a user can see, not for a word. It has one now.
 
 **Their app has no width-based breakpoints at all** — `globals.css` carries only
 `prefers-reduced-motion`, and there is no `matchMedia` hook anywhere. Porting the
