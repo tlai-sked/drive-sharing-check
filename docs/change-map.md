@@ -76,6 +76,37 @@ may start working again and the script becomes unnecessary. Confirm before
 deleting it, and keep the reasoning either way — the error message will not
 help the next person.
 
+### Behaviour that also exists in the Idea Hub port
+
+The tool was ported into `KhoaVu-Sked/vn-ai-ideas-hub` in September 2026 as
+`features/tools/drive/` — a real React port, not a copy of the HTML, with its
+own tests under `features/tools/drive/__tests__/`. Two implementations of the
+same tool now exist and **nothing connects them**: no shared module, no shared
+test, and no check that can see across repositories.
+
+| Also change | Why |
+|---|---|
+| `features/tools/drive/` in the Idea Hub repo | a behaviour fixed here stays broken there, and the two will be reported as the same tool |
+| their tests, in the same change | their port is tested separately; ours passing says nothing about theirs |
+
+Known to match as of 22 Sep 2026: `canFix()` carries the identical
+`ownedByMe && canShare` rule, and their `fix.js` additionally refuses at the
+write layer — stricter than this repo, which gates in the UI and the dialog.
+`remindMailto` exists on both sides.
+
+Working in their repo: this account has **READ** only, so fork
+(`tlai-sked/vn-ai-ideas-hub`) → branch → PR, and Khoa merges and ships
+production. Their "staging" is the Vercel host
+`ts-ai-ideas-hub-staging.vercel.app`, not a git branch — there is no branch by
+that name. Read their `CLAUDE.md` and their `docs/change-map.md` first, and run
+`bun run check`; they state plainly that a clean `next build` is not
+verification.
+
+**The honest options are to accept the drift deliberately or to remove one
+copy.** Keeping two by hand is the rule this project already learned does not
+hold — it is how three copies of the HTML happened. Nobody has decided yet;
+until someone does, treat any change here as half a change.
+
 ### Anything that offers to change a file
 
 | Also change | Why |

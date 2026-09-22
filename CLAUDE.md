@@ -178,13 +178,19 @@ URL from being a public tool.
 
 ## Outstanding
 
-1. **Move into the Idea Hub app** (`KhoaVu-Sked/vn-ai-ideas-hub`) — Next.js 15,
-   Vercel, Neon, bun. Phase 1: drop the HTML into `public/` and confirm
-   `middleware.js` lets it through. Phase 2: `features/drive-sharing/` plus a
-   one-line re-export. **Do not** add the Drive scope to Idea Hub's login client
-   ID, and **do not** store refresh tokens in Neon. Preview URLs change per
-   deploy and Google allows no wildcard origins, so a fixed staging domain is
-   needed first.
+1. **The tool now exists twice.** Khoa ported it into
+   `KhoaVu-Sked/vn-ai-ideas-hub` as a React feature — `features/tools/drive/`
+   with a re-export at `app/tools/drive-sharing-check` — and it has its own
+   tests. That was Outstanding 1 and it is done, but it leaves this repo's
+   `index.html` and their port as two implementations that can drift. Nothing
+   links them. Before changing behaviour here, read `docs/change-map.md`,
+   "Behaviour that also exists in the Idea Hub port".
+
+   Working there: we have **READ** on Khoa's repo, so the flow is fork
+   (`tlai-sked/vn-ai-ideas-hub`) → branch → PR, and Khoa merges. Their
+   "staging" is a Vercel host, `ts-ai-ideas-hub-staging.vercel.app`, not a git
+   branch. Their repo has its own rules — read its `CLAUDE.md` and run
+   `bun run check`.
 2. **Folder restructure** (roadmap item 5). Blocked on Trung's
    folder-to-audience table. Moving files does **not** fix existing
    over-sharing — see `docs/requirements.md`, "Not this tool's job".
