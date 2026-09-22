@@ -149,4 +149,5 @@ next mistake are two separate jobs; this tool is for the first.
 | `docs/hosting.md` | Deploying, OAuth origins, and the build stamp |
 | `docs/testing.md` | How to test here and what jsdom will not do |
 | `docs/change-map.md` | What else you have to change when you change something |
+| `docs/idea-hub.md` | Working on the React port in Khoa's repo, and how it differs from here |
 | `scripts/check.mjs` | The couplings a script can catch, each one added after it got past someone |

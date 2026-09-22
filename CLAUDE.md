@@ -48,6 +48,7 @@ tool is and how to set up the Apps Script watcher.
 | `docs/hosting.md` | Deploying, OAuth origins, and the Vercel quirk in this repo. |
 | `docs/testing.md` | How to test here and what jsdom will not do. |
 | `docs/change-map.md` | What else has to change when you change something. |
+| `docs/idea-hub.md` | Working on the React port in Khoa's repo: the fork → branch → PR flow, and their rules. |
 
 **There is no build step.** What is in `index.html` is what runs.
 
@@ -186,11 +187,9 @@ URL from being a public tool.
    links them. Before changing behaviour here, read `docs/change-map.md`,
    "Behaviour that also exists in the Idea Hub port".
 
-   Working there: we have **READ** on Khoa's repo, so the flow is fork
-   (`tlai-sked/vn-ai-ideas-hub`) → branch → PR, and Khoa merges. Their
-   "staging" is a Vercel host, `ts-ai-ideas-hub-staging.vercel.app`, not a git
-   branch. Their repo has its own rules — read its `CLAUDE.md` and run
-   `bun run check`.
+   Working there is a fork → branch → PR flow, verified with their tooling,
+   not ours. `docs/idea-hub.md` has the commands, their rules, and where their
+   port is behind this one. Read it before touching that repo.
 2. **Folder restructure** (roadmap item 5). Blocked on Trung's
    folder-to-audience table. Moving files does **not** fix existing
    over-sharing — see `docs/requirements.md`, "Not this tool's job".
