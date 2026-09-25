@@ -10,50 +10,44 @@ Local clone: `~/Documents/Claude/Artifacts/vn-ai-ideas-hub`.
 
 ## The flow
 
-**Fork from main → branch from the fork → work → PR → review → approve.** Nothing
-is pushed to Khoa's repo directly, and the fork's `main` is never committed to.
+**Branch → work → PR → review → approve → Khoa merges and ships.** `main` is
+never committed to.
 
-```
-KhoaVu-Sked/vn-ai-ideas-hub  main          ← upstream, read-only here
-        │ fork
-tlai-sked/vn-ai-ideas-hub    main          ← origin, kept identical to upstream
-        │ branch
-        feature/<the-work>                 ← every change lives here
-        │ PR
-KhoaVu-Sked/vn-ai-ideas-hub  main          ← Khoa reviews, approves, merges, ships
-```
+Write access was granted on 25 Sep 2026, so branches go straight onto Khoa's
+repo and the fork is no longer in the loop. `origin` is his repo.
 
 ```bash
 cd ~/Documents/Claude/Artifacts/vn-ai-ideas-hub
-git checkout main && git pull                  # main tracks upstream/main
+git checkout main && git pull
 git checkout -b feature/<the-work>             # their convention: feature/*
 # … change, then verify with THEIR tooling, below …
-git push -u origin feature/<the-work>          # to the fork, never upstream
+git push -u origin feature/<the-work>
 gh pr create --repo KhoaVu-Sked/vn-ai-ideas-hub --base main
 ```
 
-`upstream`'s push URL is deliberately set to `DISABLED_read_only_upstream`, so a
-mistyped `git push upstream` fails loudly instead of attempting a write.
+`.git/hooks/pre-push` in that clone refuses a push to `main` — local only, not
+in the repo. Write access makes that one command able to skip review entirely,
+and the hook is the cheapest guard against a mistyped branch name. Override with
+`--no-verify` only on purpose.
 
-Keeping the fork current: `gh repo sync tlai-sked/vn-ai-ideas-hub --source
-KhoaVu-Sked/vn-ai-ideas-hub`. It was 205 commits behind when this started.
+The old fork (`tlai-sked/vn-ai-ideas-hub`) still exists but nothing points at it
+any more. It is the fallback if access is ever withdrawn.
 
 ---
 
 ## What is different over there
 
-**We have READ on Khoa's repo.** Not write. That is why the flow is a fork and
-not a branch on his repo. If the intention is for Thao to work on staging
-directly, that access has not been granted — worth asking rather than assuming.
-
 **"Staging" is a Vercel host, not a git branch.** `ts-ai-ideas-hub-staging.vercel.app`,
 gated behind `/login` by `middleware.js`. There is no branch called `staging`;
 their code checks `isStagingHost` against that hostname.
 
-**A PR from a fork gets no preview build.** Vercel refuses to build fork PRs
-automatically — a fork PR could read the project's secrets — and posts a failing
-check linking to `vercel.com/git/authorize`. That is not a broken build. Khoa has
-to authorise it, every time, until the access question above is settled.
+**Previews build by themselves now.** A same-repo PR gets a Vercel preview with
+nobody authorising anything — confirmed on PR #14. While the work came from a
+fork, Vercel refused to build and posted a failing check linking to
+`vercel.com/git/authorize`, which was never a broken build. That is over.
+
+The preview URL is behind **Vercel SSO**, so opening it needs a login with
+access to the "Khoa Vu" team, not just the link.
 
 **Verify with their tooling, not ours.** Their rules, from their `CLAUDE.md`:
 
@@ -92,23 +86,28 @@ Thao Lai's original tool, still live. This checker cannot see that one."*
 
 ## Where their port is behind this one
 
-Verified 22 Sep 2026 by reading the source, not by running it:
+Re-measured 25 Sep 2026 by reading the source. The port has moved fast — treat
+any older version of this table as wrong:
 
 | | Here | Their port |
 |---|---|---|
 | Scan, classify, bulk change, expiry, watched folders | yes | yes |
-| Paged results | yes | added 22 Sep 2026 — see the note below |
 | Remind owner, `canFix` ownership gate | yes | yes, and refused at the write layer too |
+| Paged results | yes | yes |
+| Plan time to fix | yes | yes |
+| People picker when sharing | yes | yes |
+| Severity summary, search, folder trails | partly | yes — ahead of here |
 | "Shared with me" scope | yes, hidden | no |
-| Plan time to fix (Calendar) | yes | no |
-| People picker when sharing | yes | no |
 | Jump to section | yes | no |
 | Docked phone action bar | yes | no |
 
-The pagination row was a mistake in an earlier version of this table. A grep
-for `page` matched `pageToken` and `pageSize` — Drive's *API* paging inside
-`scan.js` — and was read as a paged results list, which their port did not
-have. Grep for what a user can see, not for a word. It has one now.
+Two rows of this table have been wrong before, both from the same mistake:
+grepping for a word rather than for what a user can see. `page` matched
+`pageToken`, Drive's *API* paging; a pattern for `paths.js` matched nothing
+while the file sat there. Open the file before writing a row.
+
+Their port is now ahead of this one in places — a severity summary, search, and
+folder trails showing where a finding actually lives.
 
 **Their app has no width-based breakpoints at all** — `globals.css` carries only
 `prefers-reduced-motion`, and there is no `matchMedia` hook anywhere. Porting the
