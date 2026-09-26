@@ -11,3 +11,6 @@ node_modules/
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Screenshots from browser checks. One reached a commit via `git add -A`.
+*.png
