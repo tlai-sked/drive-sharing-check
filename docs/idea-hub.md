@@ -41,6 +41,20 @@ any more. It is the fallback if access is ever withdrawn.
 gated behind `/login` by `middleware.js`. There is no branch called `staging`;
 their code checks `isStagingHost` against that hostname.
 
+**Seeing a UI change does not need a preview.** `bun render-check.mjs` in that
+clone renders the real components against the real stylesheet to a static file
+— local only, git-excluded. It has caught two things `bun test`, `bun run
+check` and `next build` all passed, because none of those three can see a page:
+a grid left over from a removed column that wrapped filenames one character per
+line, and a state machine that left every section collapsed on first paint.
+Render before pushing anything visual.
+
+**Preview access is per deployment, not per person.** Approving one preview
+does not approve the next, so every PR asks again. Khoa was asked on 26 Sep to
+add `tlai@skedulo.com` to the Vercel team, which would settle it; until then
+his standing answer is to merge to main and look at the deployed site. That is
+fine for logic and poor for anything visual — hence the renderer above.
+
 **Previews build by themselves now.** A same-repo PR gets a Vercel preview with
 nobody authorising anything — confirmed on PR #14. While the work came from a
 fork, Vercel refused to build and posted a failing check linking to
