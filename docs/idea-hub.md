@@ -47,7 +47,9 @@ clone renders the real components against the real stylesheet to a static file
 check` and `next build` all passed, because none of those three can see a page:
 a grid left over from a removed column that wrapped filenames one character per
 line, and a state machine that left every section collapsed on first paint.
-Render before pushing anything visual.
+Render before pushing anything visual. `bun render-live.mjs` goes further: it mounts
+the whole page against a fake Drive, so state, effects and clicks are exercised, not
+only markup.
 
 **Preview access is per deployment, not per person.** Approving one preview
 does not approve the next, so every PR asks again. Khoa was asked on 26 Sep to
